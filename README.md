@@ -6,3 +6,5 @@ cron jobs with github actions for jerfus
 will add more cron jobs soon.
 
 this can do some other sites also.
+
+update.
