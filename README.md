@@ -7,4 +7,6 @@ will add more cron jobs soon.
 
 this can do some other sites also.
 
+like also checking the proxy on the same server
+
 update.
