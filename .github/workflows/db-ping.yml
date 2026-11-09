@@ -1,4 +1,4 @@
-name: Daily DB Ping
+name: Daily Pings
 
 "on":
   schedule:
@@ -6,15 +6,25 @@ name: Daily DB Ping
   workflow_dispatch:
 
 jobs:
-  ping-db:
+  ping:
+    name: Ping ${{ matrix.name }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: db-ping
+            url: https://trurank.developable.app/api/db-ping
+          - name: landing-news
+            url: https://developable.app/landing/news.php
     steps:
       - name: Install Cloudflare-aware HTTP client
         run: python -m pip install --disable-pip-version-check --quiet cloudscraper
 
-      - name: Hit db-ping
+      - name: Hit ${{ matrix.name }}
         env:
-          DB_PING_URL: https://trurank.developable.app/api/db-ping
+          PING_NAME: ${{ matrix.name }}
+          PING_URL: ${{ matrix.url }}
         run: |
           python - <<'PY'
           import os
@@ -22,7 +32,8 @@ jobs:
           import time
           import cloudscraper
 
-          url = os.environ["DB_PING_URL"]
+          name = os.environ["PING_NAME"]
+          url = os.environ["PING_URL"]
           scraper = cloudscraper.create_scraper(
               browser={"browser": "chrome", "platform": "linux", "desktop": True}
           )
@@ -35,7 +46,7 @@ jobs:
                   print(f"HTTP {response.status_code}")
 
                   if 200 <= response.status_code < 300:
-                      print("db-ping succeeded")
+                      print(f"{name} succeeded")
                       sys.exit(0)
 
                   server = response.headers.get("server", "")
@@ -48,6 +59,6 @@ jobs:
                       time.sleep(5 * attempt)
                       continue
 
-          print(f"db-ping failed after retries: {last_exc}", file=sys.stderr)
+          print(f"{name} failed after retries: {last_exc}", file=sys.stderr)
           sys.exit(1)
           PY
